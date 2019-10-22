@@ -1,0 +1,65 @@
+{
+  "name": "spreadjs-playground",
+  "version": "0.1.0",
+  "private": true,
+  "main": "public/electron.js",
+  "productName": "SpreadJS Playground",
+  "homepage": "./",
+  "build": {
+    "directories": {
+      "buildResources": "resources"
+    }
+  },
+  "dependencies": {
+    "@grapecity/spread-sheets": "^12.2.5",
+    "@grapecity/spread-sheets-pdf": "^12.2.5",
+    "@grapecity/spread-sheets-print": "^12.2.5",
+    "@grapecity/spread-sheets-react": "^12.2.5",
+    "brace": "^0.11.1",
+    "canvas": "^2.6.0",
+    "cross-env": "^6.0.3",
+    "electron-is-dev": "^1.1.0",
+    "file-saver": "^2.0.2",
+    "immer": "^4.0.1",
+    "jsoneditor": "^7.0.4",
+    "jsoneditor-react": "^1.0.1",
+    "lodash": "^4.17.15",
+    "mock-browser": "^0.92.14",
+    "observable-slim": "^0.1.5",
+    "ramda": "^0.26.1",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "react-scripts": "3.1.2"
+  },
+  "scripts": {
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "react-test": "react-scripts test --env=jsdom",
+    "react-eject": "react-scripts eject",
+    "electron-build": "electron-builder",
+    "release": "yarn react-build && electron-builder --publish=always",
+    "build": "yarn react-build && yarn electron-build",
+    "start": "concurrently \"cross-env BROWSER=none yarn react-start\" \"wait-on http://localhost:3000 && electron .\""
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "concurrently": "^4.1.2",
+    "electron": "^6.0.11",
+    "electron-builder": "^21.2.0",
+    "wait-on": "^3.3.0"
+  }
+}
