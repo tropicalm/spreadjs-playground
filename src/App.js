@@ -4,7 +4,8 @@ import ace from "brace";
 import "brace/mode/json";
 import "brace/theme/github";
 import Spread from "./Spread";
-import PT from "./process-template";
+
+const PT = require("./process-template");
 
 const processTemplate = PT();
 

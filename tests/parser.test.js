@@ -1,70 +1,63 @@
-const {getSpecCells, parseSpecCell, parseSpec} = require('../src/parser');
+const {
+  getSpecCells,
+  parseSpecCell,
+  parseSpec,
+  parseSpecDef,
+  groupCellsBySpec,
+  getGroupRange,
+  replaceSpecWithVal
+} = require('../src/parser');
 const template = require('../templates/template');
 
 describe("Parser", () => {
   it('gets all spec cells from a template', () => {
-    const spec = {
-      "Investor_Gains": {
-        "1": {
-          "4": "[1,investors as invr]\"{invr.name}\""
-        },
-        "3": {
-          "4": "[1,investors as invr]\"in%\""
-        },
-        "4": {
-          "0": "[investments as inv]\"{inv.name}\"",
-          "1": "[investments as inv]{inv.participation_quote}",
-          "2": "[investments as inv]{inv.dividend_distribution}",
-          "3": "[investments as inv]=SUM(F5:OFFSET(F5, 0, {investors.length}))",
-          "4": "[investments as invm,investors as invr]=$B5*{invr.commitment}"
-        }
-      }
-    };
-
+    const spec = require('./fixtures/specCellsFiltered')
     const result = getSpecCells(template);
     expect(result).toEqual(spec)
   });
 
+  it('gets all spec cells from a template', () => {
+    const spec = require('./fixtures/specCellsGrouped')
+    const specCells = getSpecCells(template)
+    let result = groupCellsBySpec(specCells);
+    expect(result).toEqual(spec)
+  });
+
+  it('parses a spec definition', () => {
+    let spec, result
+    
+    spec = "repeat for inv in investments below"
+    result = parseSpecDef(spec)
+    expect(result).toEqual({"below": ["inv", "investments"]})
+
+    spec = "repeat for invr in investors to the right"
+    result = parseSpecDef(spec)
+    expect(result).toEqual({"right": ["invr", "investors"]})
+
+    spec = "repeat for inv in investments below\nrepeat for invr in investors to the right"
+    result = parseSpecDef(spec)
+    expect(result).toEqual({"below": ["inv", "investments"], "right": ["invr", "investors"]})
+  })
+
+  it('gets a group range', () => {
+    let group, result
+    const specCells = getSpecCells(template)
+    const groupedCells = groupCellsBySpec(specCells)
+    
+    group = groupedCells["Investor_Gains"]["repeat for inv in investments below"]
+    result = getGroupRange(group)
+    expect(result).toEqual({"x": 3, "y": 1})
+    
+    group = groupedCells["Investor_Gains"]["repeat for invr in investors to the right"]
+    result = getGroupRange(group)
+    expect(result).toEqual({"x": 1, "y": 2})
+
+  })
+
   it('parses a loop containing an value', () => {
-    const spec = "[investments as inv]{inv.name}";
-    const data = {
-      investments: [{
-        name: 'abc'
-      }, {
-        name: 'another inv'
-      }],
-      investors: [{
-        name: 'tom',
-        commitment: 12
-      }, {
-        name: 'bob',
-        commitment: 50
-      }]
-    }
-    const result = parseSpecCell(spec, data);
-    expect(result).toEqual(["abc", "another inv"])
-  });
-
-  it('parses a loop containing a formula', () => {
-    const spec = "[investments as inv]=SUM(F5:OFFSET(F5, 0, {investors.length}))";
-    const data = {
-      investments: [{
-        name: 'abc'
-      }, {
-        name: 'another inv'
-      }],
-      investors: [{
-        name: 'tom'
-      }, {
-        name: 'bob'
-      }]
-    }
-    const expected = ["=SUM(F5:OFFSET(F5, 0, 2))", "=SUM(F5:OFFSET(F5, 0, 2))"];
-    const result = parseSpecCell(spec, data);
-    expect(result).toEqual(expected)
-  });
-
-  it('parses an entire spec', () => {
+    let spec, cells, result, defs
+    const specCells = getSpecCells(template)
+    const groupedCells = groupCellsBySpec(specCells)
     const data = {
       investments: [{
           name: 'abc',
@@ -86,54 +79,60 @@ describe("Parser", () => {
       }]
     }
 
-    const expectedResult = [{
-      "val": [
-        ["\"tom\"", "\"bob\""]
-      ],
-      "sheetName": "Investor_Gains",
-      "rowNr": "1",
-      "colNr": "4"
-    }, {
-      "val": [
-        ["\"in%\"", "\"in%\""]
-      ],
-      "sheetName": "Investor_Gains",
-      "rowNr": "3",
-      "colNr": "4"
-    }, {
-      "val": ["\"abc\"", "\"another inv\""],
-      "sheetName": "Investor_Gains",
-      "rowNr": "4",
-      "colNr": "0"
-    }, {
-      "val": ["12", "5"],
-      "sheetName": "Investor_Gains",
-      "rowNr": "4",
-      "colNr": "1"
-    }, {
-      "val": ["100", "25"],
-      "sheetName": "Investor_Gains",
-      "rowNr": "4",
-      "colNr": "2"
-    }, {
-      "val": ["=SUM(F5:OFFSET(F5, 0, 2))", "=SUM(F5:OFFSET(F5, 0, 2))"],
-      "sheetName": "Investor_Gains",
-      "rowNr": "4",
-      "colNr": "3"
-    }, {
-      "val": [
-        ["=$B5*10", "=$B5*50"],
-        ["=$B5*10", "=$B5*50"]
-      ],
-      "sheetName": "Investor_Gains",
-      "rowNr": "4",
-      "colNr": "4"
-    }];
+    spec = require('./fixtures/specCellsParsed')
+    defs = "repeat for inv in investments below"
+    cells = groupedCells["Investor_Gains"][defs]
+    result = parseSpecCell(defs, cells, data);
 
-    const result = parseSpec(getSpecCells(template), data, x => x);
-    
-    //console.log(JSON.stringify(result));
+    expect(result).toEqual(spec)
+  });
 
-    expect(result).toEqual(expectedResult)
+
+
+  it.skip('parses a loop containing a formula', () => {
+    const spec = "[investments as inv]=SUM(F5:OFFSET(F5, 0, {investors.length}))";
+    const data = {
+      investments: [{
+        name: 'abc'
+      }, {
+        name: 'another inv'
+      }],
+      investors: [{
+        name: 'tom'
+      }, {
+        name: 'bob'
+      }]
+    }
+    const expected = ["=SUM(F5:OFFSET(F5, 0, 2))", "=SUM(F5:OFFSET(F5, 0, 2))"];
+    const result = parseSpecCell(spec, data);
+    expect(result).toEqual(expected)
+  });
+
+  it('parses an entire spec', () => {
+    let expectedResult, result
+    const data = {
+      investments: [{
+          name: 'abc',
+          participation_quote: 12,
+          dividend_distribution: 100
+        },
+        {
+          name: 'another inv',
+          participation_quote: 5,
+          dividend_distribution: 25
+        }
+      ],
+      investors: [{
+        name: 'tom',
+        commitment: 10
+      }, {
+        name: 'bob',
+        commitment: 50
+      }]
+    }
+
+    expectedResult = require('./fixtures/specParsed')
+    result = parseSpec(template, data);
+    expect(result).toEqual(expectedResult)    
   });
 })

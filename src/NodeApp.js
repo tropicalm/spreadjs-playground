@@ -7,7 +7,7 @@ const GC = require("@grapecity/spread-sheets");
 const wb = new GC.Spread.Sheets.Workbook();
 
 const templatePath = './templates/template.ssjson'
-const outputPath = './templates/template-parsed.ssjson'
+const outputPath = './templates/template-parsed.json'
 
 const rawTemplate = fs.readFileSync(templatePath);
 const template = JSON.parse(rawTemplate);
@@ -71,13 +71,13 @@ const data = {
     ]
   };
 
-for(let i = 0; i < 1000; i++) {
-    data.investors.push({
-        id: "Investor_D"+i,
-        name: "Investor D"+i,
-        commitment: 0.8
-      })
-}
+// for(let i = 0; i < 1000; i++) {
+//     data.investors.push({
+//         id: "Investor_D"+i,
+//         name: "Investor D"+i,
+//         commitment: 0.8
+//       })
+// }
 
 for(let i = 0; i < 8; i++) {
     data.investments.push({

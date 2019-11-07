@@ -1,6 +1,6 @@
 const processTemplate = require('../src/process-template-backend')();
 const template = require('../templates/template');
-const templateParsed = require('../templates/template-parsed');
+const templateParsed = require('../templates/template-parsed.json');
 
 const data = {
   investments: [
@@ -63,8 +63,9 @@ const data = {
 
 
 describe("Process template backend", () => {
-  it.only('gets all spec cells from a template',  () => {
+  it('gets all spec cells from a template',  () => {
     const result = processTemplate(template, data);
+    expect(true).toBe(true)
     expect(result).toEqual(templateParsed)
    // done()
   });

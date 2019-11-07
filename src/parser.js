@@ -1,65 +1,175 @@
-const { compose, equals, filter, flatten, isEmpty, mapObjIndexed, not, path, prop, values } = require('ramda');
+const {
+  append,
+  ascend,
+  clone,
+  compose,
+  concat,
+  contains,
+  equals,
+  filter,
+  find,
+  flatten,
+  head,
+  isEmpty,
+  keys,
+  last,
+  map,
+  min,
+  max,
+  mapObjIndexed,
+  not,
+  omit,
+  toPairs,
+  path,
+  pipe,
+  prop,
+  reduce,
+  sortWith,
+  unnest,
+  values
+} = require('ramda');
 
-function getSpecCells(template) {
-    const isSpec = compose(equals('spec'), path(['style', 'parentName']));
-    const getValues = mapObjIndexed(prop('value'));
-    const filterCells = compose(getValues, filter(isSpec));
+const filterCells = filter(prop('tag'))
+const notEmpty = compose(not, isEmpty);
+const getSheetData = path(['data', 'dataTable'])
+const mapSheets = fn => mapObjIndexed(compose(fn, getSheetData))
+const filterColumns = pipe(mapObjIndexed(filterCells), filter(notEmpty));
+const sortByPos = sortWith([ascend(prop('x')), ascend(prop('y'))])
 
-    const notEmpty = compose(not, isEmpty);
-    const filterColumns = compose(filter(notEmpty), mapObjIndexed(filterCells));
+const groupCells = mapObjIndexed(sheet =>
+  compose(sortByPos, unnest, values, mapObjIndexed)((row, rowNr) =>
+    compose(values, mapObjIndexed)((cell, colNr) => {
+      return {
+        x: parseInt(colNr),
+        y: parseInt(rowNr),
+        v: cell
+      }
+    }, row), sheet))
 
-    const getDatatables = path(['data', 'dataTable']);
-    const filterSheets = compose(filter(notEmpty), mapObjIndexed(compose(filterColumns, getDatatables)));
+const getSpecCells = spec => pipe(
+  prop('sheets'),
+  mapSheets(filterColumns),
+  filter(notEmpty),
+  groupCells
+)(spec)
+
+const groupCellsBySpec = spec => mapObjIndexed(val => 
+  reduce((acc, cur) => {
+    const tag = cur.v.tag
+    const list = acc[tag] || (acc[tag] = [])
+    list.push({
+      x: cur.x,
+      y: cur.y,
+      v: omit(['tag'], cur.v)
+    })
+    return acc
+  }, {})(val))(spec)
+
+function parseSpecDef(spec) {
+  const re = /repeat for ([^\s]+) in ([^\s]+) (.*)/
+  const parsed = spec
+    .split('\n')
+    .map(x => {
+      const params = x.match(re)
+      return params && params.slice(1)
+    })
+
+  const below = find(contains('below'), parsed)
+  const right = find(contains('to the right'), parsed)
+
+  return {
+    ...(below && {
+      below: below.slice(0, -1)
+    }),
+    ...(right && {
+      right: right.slice(0, -1)
+    })
+  }
+}
+
+const fnByProp = (fn, name, data) =>
+  reduce((acc, elem) =>
+    fn(acc, prop(name, elem)),
+    prop(name, data[0]), data)
+
+function getGroupRange(cells) {
+  const minX = fnByProp(min, 'x', cells)
+  const minY = fnByProp(min, 'y', cells)
+  const maxX = fnByProp(max, 'x', cells)
+  const maxY = fnByProp(max, 'y', cells)
+
+  return {
+    x: maxX - minX || 1,
+    y: maxY - minY || 1
+  }
+}
+
+function replaceSpecWithVal(spec, data) {
+
+}
+
+const reBuilder = name => RegExp(`(\\[${name}\\.(\\w*)\\])`, 'g')
+
+function parseSpecCell(spec, cells, data) {
+  const loops = parseSpecDef(spec)
+  if (!loops.below && !loops.right) {
+    return []
+  }
+
+  const range = getGroupRange(cells)
+  const firstLoop = (loops.below && data[loops.below[1]]) || [0]
+  const secondLoop = (loops.right && data[loops.right[1]]) || [0]
+
+  return firstLoop.reduce((acc, cur, idx) =>
+    acc.concat(secondLoop.reduce((acc2, cur2, idx2) =>
+      acc2.concat(cells.map(c => {
+        const cell = clone(c)
+
+        cell.x += range.x * idx2
+        cell.y += range.y * idx
+        cell.dx = idx2
+        cell.dy = idx
+
+        let type
+        if (c.v.value && typeof c.v.value === "string") {
+          type = 'value'
+        }
+
+        if (c.v.formula && typeof c.v.formula === "string") {
+          type = 'formula'
+        }
+
+        if(typeof c.v.value === "object") {
+          delete cell.v.value
+        }
+
+        if (type) {
+          cell.v[type] = cell.v[type]
+            .replace(loops.below && reBuilder(loops.below[0]), (_, __, key) => prop(key, cur))
+            .replace(loops.right && reBuilder(loops.right[0]), (_, __, key) => prop(key, cur2))
+            .replace(reBuilder('(\\w*)'), (expr, _, key, val) => path([key, val], data) || expr)
+        }
+
+        return cell
+      })), [])), [])
+}
+
+function parseSpec(template, data) {
+  return pipe(
+    getSpecCells,
     
-    return filterSheets(template.sheets);
-}
-
-function parseSpecCell(spec, data) {
-    const re = /^\[(.*)\](.*)/
-    const steps = re.exec(spec) || ["",""]
-    const loops = steps[1].split(",").map(el => el.split(" as "));
+    groupCellsBySpec,
     
-    let res;
-    if(loops[0][0]) {
-        const range = parseInt(loops[0][0]) ? Array.from(Array(parseInt(loops[0][0])).keys()) : data[loops[0][0]];
-        res = range.map(el => {
-            if(loops[1] && loops[1][0]) {
-                return data[loops[1][0]].map(el2 => {
-                    return steps[2].replace(/\{(.*)\}/, (str, str2) => {
-                        const strPath = str2.split(".");
-                        if(strPath[0] === loops[0][1]) {
-                            return path(strPath.slice(1), el)
-                        } else if(strPath[0] === loops[1][1]) {
-                            return path(strPath.slice(1), el2)
-                        } else {
-                            return path(strPath, data)
-                        }
-                    })
-                });
-            }
-
-            else {
-
-                return steps[2].replace(/\{(.*)\}/, (str, str2) => {
-                    const strPath = str2.split(".");
-                    return strPath[0] === loops[0][1] ? path(strPath.slice(1), el) : path(strPath, data)
-                })
-            }
-        })
-    }
-    return res
+    mapObjIndexed(mapObjIndexed((group, defs) =>
+      parseSpecCell(defs, group, data)
+    )),
+    
+    mapObjIndexed(pipe(
+      values,
+      reduce(concat, [])
+    )),
+    //x => console.log(x) || x,
+  )(template)
 }
 
-function parseSpec(spec, data, fn) {
-    return flatten(values(mapObjIndexed((sheet, sheetName) => {
-        return flatten(values(mapObjIndexed((row, rowNr) => {
-            return values(mapObjIndexed((cell, colNr) => {
-                const val = parseSpecCell(cell, data)
-                return {val, sheetName, rowNr, colNr}
-            }, row))
-        }, sheet)))
-    }, spec)))
-}
-
-
-module.exports = {getSpecCells, parseSpecCell, parseSpec};
+module.exports = {getSpecCells,parseSpecCell,parseSpec,parseSpecDef,groupCellsBySpec,getGroupRange,replaceSpecWithVal};

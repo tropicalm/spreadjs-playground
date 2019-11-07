@@ -1,5 +1,7 @@
 const GC = require("@grapecity/spread-sheets");
-const {getSpecCells, parseSpec} = require("./parser");
+const { parseSpec } = require("./parser");
+
+const R = require('ramda')
 
 let worksheet;
 
@@ -8,34 +10,20 @@ function updateFormula(formula, x, y) {
   return GC.Spread.Sheets.CalcEngine.expressionToFormula(worksheet, expression, x, y);
 }
 
-function updateRow(sheet, value, rowId, colId, rowD, colD) {
-  const x = parseInt(rowId) + rowD;
-  const y = parseInt(colId) + colD;
-  const formula = updateFormula(value, rowD, colD);
-
-  sheet.data.dataTable[x][y] = {
-      formula: formula
-  }
-}
-
 function processTemplate(template, data) {
-  const specCells = getSpecCells(template);
-  const spec = parseSpec(specCells, data)
-  const result = JSON.parse(JSON.stringify(template));
+  const spec = parseSpec(template, data)
 
-  spec.map((el) => {
-    const sheet = result.sheets[el.sheetName];
-    el.val.map((cellSpec, idx) => {
-      if(Array.isArray(cellSpec)) {
-          cellSpec.map((value, colIdx) => {
-            updateRow(sheet, value, el.rowNr, el.colNr, idx, colIdx)
-          });
-      } else {
-        updateRow(sheet, cellSpec, el.rowNr, el.colNr, idx, 0)
-      }
-    })
-  });
-  return result;
+  const diff = R.mapObjIndexed(v => R.reduce
+    ((acc, cur) => {
+    const data = acc.data.dataTable
+    const col = data[cur.y] || (data[cur.y] = {})
+    const row = col[cur.x] = cur.v
+    cur.v.formula && (row.formula = updateFormula(cur.v.formula, cur.dy, cur.dx))
+
+    return acc
+  }, {data: {dataTable: {}}})(v))(spec)
+
+  return R.mergeDeepLeft({sheets:diff}, template)
 }
 
 module.exports = (ws) => {
