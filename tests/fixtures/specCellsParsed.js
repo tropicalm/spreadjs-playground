@@ -41,10 +41,6 @@ module.exports = [{
   "dx": 0,
   "dy": 0,
   "v": {
-    "value": {
-      "_calcError": "#NAME?",
-      "_code": 29
-    },
     "style": {
       "imeMode": 1,
       "parentName": "Standard 10"
@@ -94,10 +90,6 @@ module.exports = [{
   "dx": 0,
   "dy": 1,
   "v": {
-    "value": {
-      "_calcError": "#NAME?",
-      "_code": 29
-    },
     "style": {
       "imeMode": 1,
       "parentName": "Standard 10"

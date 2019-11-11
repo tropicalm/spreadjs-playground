@@ -1,33 +1,4 @@
-const {
-  append,
-  ascend,
-  clone,
-  compose,
-  concat,
-  contains,
-  equals,
-  filter,
-  find,
-  flatten,
-  head,
-  isEmpty,
-  keys,
-  last,
-  map,
-  min,
-  max,
-  mapObjIndexed,
-  not,
-  omit,
-  toPairs,
-  path,
-  pipe,
-  prop,
-  reduce,
-  sortWith,
-  unnest,
-  values
-} = require('ramda');
+const {ascend, clone, compose, concat, contains, filter, find, isEmpty, min, max, mapObjIndexed, mergeDeepLeft, not, omit, path, pipe, prop, reduce, sortWith, unnest, values } = require('ramda')
 
 const filterCells = filter(prop('tag'))
 const notEmpty = compose(not, isEmpty);
@@ -51,6 +22,19 @@ const getSpecCells = spec => pipe(
   mapSheets(filterColumns),
   filter(notEmpty),
   groupCells
+)(spec)
+
+const getNoSpecCells = spec => pipe(
+  prop('sheets'),
+  mapSheets(pipe(
+    mapObjIndexed(filter(el => {
+      return !el.tag && (
+            (typeof el.value === "string" && el.value.match(/\[*.\]/)) || 
+            (typeof el.formula === "stirng" && el.formula.match(/\[*.\]/)))
+    })),
+    filter(notEmpty),
+  )),
+  filter(notEmpty),
 )(spec)
 
 const groupCellsBySpec = spec => mapObjIndexed(val => 
@@ -77,14 +61,10 @@ function parseSpecDef(spec) {
   const below = find(contains('below'), parsed)
   const right = find(contains('to the right'), parsed)
 
-  return {
-    ...(below && {
-      below: below.slice(0, -1)
-    }),
-    ...(right && {
-      right: right.slice(0, -1)
-    })
-  }
+  return Object.assign({},
+    (below && {below: below.slice(0, -1)}),
+    (right && {right: right.slice(0, -1)})
+  )
 }
 
 const fnByProp = (fn, name, data) =>
@@ -154,8 +134,30 @@ function parseSpecCell(spec, cells, data) {
       })), [])), [])
 }
 
+
+const specRe = RegExp(`\\[(\\w*)\\]`, 'g')
+const parseNoSpecCells = (spec, data) => pipe(
+  mapSheets(
+    mapObjIndexed(mapObjIndexed(el => {
+      if (el.formula) {
+        return {
+          formula: el.formula.replace(specRe, (expr, _, key) => prop(key, data) || expr)
+        }
+      }
+
+      else {
+        return {
+          value: el.value.replace(specRe, (expr, _, key) => prop(key, data) || expr)
+        }
+      }
+    }))))(spec)
+
+
 function parseSpec(template, data) {
-  return pipe(
+  const noSpecCells = getNoSpecCells(template)
+  const parsedNoSpecCells = parseNoSpecCells(noSpecCells, data)
+  debugger
+  return mergeDeepLeft(parsedNoSpecCells, pipe(
     getSpecCells,
     
     groupCellsBySpec,
@@ -169,7 +171,7 @@ function parseSpec(template, data) {
       reduce(concat, [])
     )),
     //x => console.log(x) || x,
-  )(template)
+  )(template))
 }
 
-module.exports = {getSpecCells,parseSpecCell,parseSpec,parseSpecDef,groupCellsBySpec,getGroupRange,replaceSpecWithVal};
+module.exports = {getSpecCells,parseSpecCell,parseSpec,parseSpecDef,groupCellsBySpec,getGroupRange,replaceSpecWithVal}

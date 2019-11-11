@@ -44,10 +44,6 @@ module.exports = {
       "style": {
         "imeMode": 1,
         "parentName": "Standard 10"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 3,
@@ -97,10 +93,6 @@ module.exports = {
       "style": {
         "imeMode": 1,
         "parentName": "Standard 10"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 3,
@@ -174,10 +166,6 @@ module.exports = {
         "imeMode": 1,
         "parentName": "Standard 10",
         "themeFont": "Body"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 4,
@@ -191,10 +179,6 @@ module.exports = {
         "imeMode": 1,
         "parentName": "Standard 10",
         "themeFont": "Body"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 5,
@@ -208,10 +192,6 @@ module.exports = {
         "imeMode": 1,
         "parentName": "Standard 10",
         "themeFont": "Body"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 4,
@@ -225,10 +205,6 @@ module.exports = {
         "imeMode": 1,
         "parentName": "Standard 10",
         "themeFont": "Body"
-      },
-      "value": {
-        "_calcError": "#NAME?",
-        "_code": 29
       }
     },
     "x": 5,

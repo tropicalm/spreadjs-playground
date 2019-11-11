@@ -5,9 +5,8 @@ const {
   parseSpecDef,
   groupCellsBySpec,
   getGroupRange,
-  replaceSpecWithVal
 } = require('../src/parser');
-const template = require('../templates/template');
+const template = require('./fixtures/template');
 
 describe("Parser", () => {
   it('gets all spec cells from a template', () => {
@@ -85,27 +84,6 @@ describe("Parser", () => {
     result = parseSpecCell(defs, cells, data);
 
     expect(result).toEqual(spec)
-  });
-
-
-
-  it.skip('parses a loop containing a formula', () => {
-    const spec = "[investments as inv]=SUM(F5:OFFSET(F5, 0, {investors.length}))";
-    const data = {
-      investments: [{
-        name: 'abc'
-      }, {
-        name: 'another inv'
-      }],
-      investors: [{
-        name: 'tom'
-      }, {
-        name: 'bob'
-      }]
-    }
-    const expected = ["=SUM(F5:OFFSET(F5, 0, 2))", "=SUM(F5:OFFSET(F5, 0, 2))"];
-    const result = parseSpecCell(spec, data);
-    expect(result).toEqual(expected)
   });
 
   it('parses an entire spec', () => {
