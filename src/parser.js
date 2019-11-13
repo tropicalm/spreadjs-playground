@@ -3,7 +3,7 @@ const {ascend, clone, compose, concat, contains, filter, find, isEmpty, min, max
 const filterCells = filter(prop('tag'))
 const notEmpty = compose(not, isEmpty);
 const getSheetData = path(['data', 'dataTable'])
-const mapSheets = fn => mapObjIndexed(compose(fn, getSheetData))
+const mapSheets = fn => mapObjIndexed(pipe(getSheetData, fn))
 const filterColumns = pipe(mapObjIndexed(filterCells), filter(notEmpty));
 const sortByPos = sortWith([ascend(prop('x')), ascend(prop('y'))])
 
@@ -156,21 +156,16 @@ const parseNoSpecCells = (spec, data) => pipe(
 function parseSpec(template, data) {
   const noSpecCells = getNoSpecCells(template)
   const parsedNoSpecCells = parseNoSpecCells(noSpecCells, data)
-  debugger
   return mergeDeepLeft(parsedNoSpecCells, pipe(
     getSpecCells,
-    
     groupCellsBySpec,
-    
     mapObjIndexed(mapObjIndexed((group, defs) =>
       parseSpecCell(defs, group, data)
     )),
-    
     mapObjIndexed(pipe(
       values,
       reduce(concat, [])
     )),
-    //x => console.log(x) || x,
   )(template))
 }
 

@@ -4,12 +4,12 @@ import "@grapecity/spread-sheets-print";
 import "@grapecity/spread-sheets-pdf";
 import { saveAs } from "file-saver";
 
-const setSheetDataSource = (spread, data, template, spec) => {
+const setSheetDataSource = (spread, data) => {
   const sheet = spread.getActiveSheet();
   sheet.setDataSource(new GC.Spread.Sheets.Bindings.CellBindingSource(data));
 };
 
-const Spread = ({ template, data, spec }) => {
+const Spread = ({ template, data, dataBindings, onChange }) => {
   const spread = React.useRef(null);
   const spreadRef = React.useRef(null);
   const formulaRef = React.useRef(null);
@@ -31,15 +31,20 @@ const Spread = ({ template, data, spec }) => {
 
     spread.current.fromJSON(template);
 
-    setSheetDataSource(spread.current, data, template, spec);
+    setSheetDataSource(spread.current, data);
 
     spread.current.bind(GC.Spread.Sheets.Events.ActiveSheetChanged, function(
       sender,
       args
     ) {
-      setSheetDataSource(spread.current, data, template, spec);
+      setSheetDataSource(spread.current, data);
     });
 
+
+    spread.current.bind(GC.Spread.Sheets.Events.CellChanged, (e, info) => {
+      console.log(data)
+      onChange && onChange(Object.assign({}, data))
+    })
 
 
     return () => {
@@ -47,12 +52,17 @@ const Spread = ({ template, data, spec }) => {
       fbx.destroy();
       statusBar.dispose();
     };
-  }, [template, data, spec]);
+  }, []);
+
+  React.useEffect(() => {
+    spread.current.fromJSON(template);
+    setSheetDataSource(spread.current, data);
+  }, [data, template])
 
   return (
     <div
       style={{
-        width: "100vw",
+        width: "70vw",
         height: "100vh",
         display: "flex",
         flexDirection: "column"

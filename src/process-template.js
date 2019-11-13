@@ -1,8 +1,8 @@
 const GC = require("@grapecity/spread-sheets");
 const { parseSpec } = require("./parser");
+const { getTemplateWithCustomDataBinding } = require('./customDataBinding')
 
 const R = require('ramda')
-
 let worksheet;
 
 function updateFormula(formula, x, y) {
@@ -23,7 +23,10 @@ function processTemplate(template, data) {
     return acc
   }, {data: {dataTable: {}}})(v))(spec)
 
-  return R.mergeDeepLeft({sheets:diff}, template)
+  return R.pipe(
+    R.mergeDeepLeft({sheets:diff}),
+    R.mergeDeepRight(getTemplateWithCustomDataBinding(template))
+  )(template)
 }
 
 module.exports = (ws) => {

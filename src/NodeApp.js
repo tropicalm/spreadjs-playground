@@ -79,16 +79,16 @@ const data = {
 //       })
 // }
 
-for(let i = 0; i < 8; i++) {
-    data.investments.push({
-        id: "Investment_D"+i,
-        name: "Investment D"+i,
-        type: "Equity",
-        beginningYear: 55000,
-        participation_quote: 40,
-        dividend_distribution: 240
-      })
-}
+// for(let i = 0; i < 8; i++) {
+//     data.investments.push({
+//         id: "Investment_D"+i,
+//         name: "Investment D"+i,
+//         type: "Equity",
+//         beginningYear: 55000,
+//         participation_quote: 40,
+//         dividend_distribution: 240
+//       })
+// }
 
 setTimeout(() => {
     const worksheet = new GC.Spread.Sheets.Worksheet();
