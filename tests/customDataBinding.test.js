@@ -1,6 +1,7 @@
 const {
   getDataBindingDefs,
   getTemplateWithCustomDataBinding,
+  getRefValues,
 } = require('../src/customDataBinding');
 
 describe('Custom Data Binding', () => {
@@ -19,10 +20,18 @@ describe('Custom Data Binding', () => {
     const expected = {
       sheets: {
         Sheet2: {
-          data: { dataTable: { '1': { '2': { bindingPath: 'another_kpi' } } } },
+          data: {
+            dataTable: {
+              '2': { '1': { bindingPath: 'another_kpi', formula: null } },
+            },
+          },
         },
         Sheet1: {
-          data: { dataTable: { '0': { '1': { bindingPath: 'first_kpi' } } } },
+          data: {
+            dataTable: {
+              '1': { '0': { bindingPath: 'first_kpi', formula: null } },
+            },
+          },
         },
       },
       designerBindingPathSchema: {
@@ -33,6 +42,17 @@ describe('Custom Data Binding', () => {
       },
     };
     const result = getTemplateWithCustomDataBinding(template);
+    expect(result).toEqual(expected);
+  });
+
+  it('gets values of refs', () => {
+    const template = require('./fixtures/templateWithBinding');
+    const expected = [
+      { name: 'read_only_kpi', value: 123 },
+      { name: 'another_read_only_kpi', value: 321, formula: 'SUM(B1:B3)' },
+    ];
+
+    const result = getRefValues(template);
     expect(result).toEqual(expected);
   });
 });

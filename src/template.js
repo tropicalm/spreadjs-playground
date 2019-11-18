@@ -5138,6 +5138,7 @@ module.exports = {
     },
   ],
   names: [
+    { name: 'year', formula: 'Investor_Gains!$B$1', row: 0, col: 1 },
     { name: 'custom_binding', formula: 'Investor_Gains!$C$1', row: 0, col: 2 },
   ],
   designerBindingPathSchema: {

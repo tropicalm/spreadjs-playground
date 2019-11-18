@@ -4,7 +4,6 @@ const hrstart = process.hrtime()
 const fs = require('fs')
 const processTemplate = require("./process-template-backend");
 const GC = require("@grapecity/spread-sheets");
-const wb = new GC.Spread.Sheets.Workbook();
 
 const templatePath = './templates/template.ssjson'
 const outputPath = './templates/template-parsed.json'
@@ -91,11 +90,7 @@ const data = {
 // }
 
 setTimeout(() => {
-    const worksheet = new GC.Spread.Sheets.Worksheet();
-    worksheet.reset()
-
-    const processTemplateFn = processTemplate(worksheet)
-    const result = processTemplateFn(template, data);
+    const result = processTemplate(template, data);
 
     fs.writeFile(outputPath, JSON.stringify(result), function(err) {
         if(err) {

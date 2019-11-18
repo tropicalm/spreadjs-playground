@@ -1,13 +1,13 @@
 const fs = require('fs')
-const R = require('ramda')
+const _ = require('lodash/fp')
 
 const templatePath = process.argv[2]
 const rawTemplate = fs.readFileSync(templatePath);
 const template = JSON.parse(rawTemplate);
 
-const sheetNames = R.keys(template.sheets)
+const sheetNames = _.keys(template.sheets)
 
-R.forEach(sheet => {
+_.forEach(sheet => {
     template.sheets[sheet].names = []
 })(sheetNames)
 

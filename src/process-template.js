@@ -1,35 +1,45 @@
-const GC = require("@grapecity/spread-sheets");
-const { parseSpec } = require("./parser");
-const { getTemplateWithCustomDataBinding } = require('./customDataBinding')
+const _ = require('lodash/fp');
+const deepMerge = require('deepmerge');
+const GC = require('@grapecity/spread-sheets');
+const { parseSpec } = require('./parser');
+const { getTemplateWithCustomDataBinding } = require('./customDataBinding');
+const {
+  formulaToExpression,
+  expressionToFormula,
+} = GC.Spread.Sheets.CalcEngine;
 
-const R = require('ramda')
-let worksheet;
+const wb = new GC.Spread.Sheets.Workbook(); // required by SpreadJS
+const worksheet = new GC.Spread.Sheets.Worksheet();
+worksheet.reset() // required by SpreadJS
 
 function updateFormula(formula, x, y) {
-  const expression = GC.Spread.Sheets.CalcEngine.formulaToExpression(worksheet, formula, 0, 0);
-  return GC.Spread.Sheets.CalcEngine.expressionToFormula(worksheet, expression, x, y);
+  const expression = formulaToExpression(worksheet, formula, 0, 0);
+  return expressionToFormula(worksheet, expression, x, y);
 }
 
 function processTemplate(template, data) {
-  const spec = parseSpec(template, data)
+  const spec = parseSpec(template, data);
 
-  const diff = R.mapObjIndexed(v => R.reduce
-    ((acc, cur) => {
-    const data = acc.data.dataTable
-    const col = data[cur.y] || (data[cur.y] = {})
-    const row = col[cur.x] = cur.v
-    cur.v.formula && (row.formula = updateFormula(cur.v.formula, cur.dy, cur.dx))
+  const diff = _.mapValues(v =>
+    _.reduce(
+      (acc, cell) => {
+        const data = acc.data.dataTable;
+        const col = data[cell.y] || (data[cell.y] = {});
+        const row = (col[cell.x] = cell.v);
+        cell.v.formula &&
+          (row.formula = updateFormula(cell.v.formula, cell.dy, cell.dx));
 
-    return acc
-  }, {data: {dataTable: {}}})(v))(spec)
+        return acc;
+      },
+      { data: { dataTable: {} } },
+    )(v),
+  )(spec);
 
-  return R.pipe(
-    R.mergeDeepLeft({sheets:diff}),
-    R.mergeDeepRight(getTemplateWithCustomDataBinding(template))
-  )(template)
+  return _.reduce(deepMerge, {}, [
+    template,
+    getTemplateWithCustomDataBinding(template),
+    { sheets: diff },
+  ]);
 }
 
-module.exports = (ws) => {
-  worksheet = ws;
-  return processTemplate
-}
+module.exports = processTemplate;

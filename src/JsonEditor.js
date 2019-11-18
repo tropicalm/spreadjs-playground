@@ -12,7 +12,7 @@ function JSONEditor({value, onChange}) {
         theme: "ace/theme/github",
         onChange: () => {
             try {
-                const val = Object.assign({}, jsonEditor.current.get())
+                const val = jsonEditor.current.get()
                 return onChange(val)
             } catch(err) {
                 console.log(err)

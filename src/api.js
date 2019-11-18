@@ -1,4 +1,4 @@
-const processTemplate = require('./process-template')();
+const processTemplate = require('./process-template');
 
 let db = {
   investments: [
@@ -43,23 +43,32 @@ let db = {
   ],
 };
 
-let bindings = {
-  'custom_binding': 1
-}
+// let bindings = {
+//   'custom_binding': 1
+// }
 
-let spec = require('./template')
+let bindings = {
+  local_gaap_other_receivables: 5000000,
+  local_gaap_financial_assets: 629996000,
+  local_gaap_cash_and_bank_accounts: 7500000,
+  local_gaap_contributions: 506976000,
+  local_gaap_distributions: -620500000,
+  local_gaap_other_liabilities: 100000,
+  local_gaap_n_n: 0,
+};
+
+let spec = require('./template');
 
 function setTemplateSpec(templateSpec) {
-  spec = templateSpec
+  spec = templateSpec;
 }
 
 function setData(data) {
-  db = data
+  db = data;
 }
 
 function getTemplate() {
-  const test = processTemplate(spec, db)
-  return processTemplate(spec, db)
+  return processTemplate(spec, db);
 }
 
-module.exports = {db, bindings, getTemplate, setData, setTemplateSpec};
+module.exports = { db, bindings, getTemplate, setData, setTemplateSpec };

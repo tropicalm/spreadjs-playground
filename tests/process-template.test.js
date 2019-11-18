@@ -1,4 +1,4 @@
-const processTemplate = require('../src/process-template-backend')();
+const processTemplate = require('../src/process-template-backend');
 const template = require('./fixtures/template');
 const templateParsed = require('./fixtures/template-parsed.json');
 

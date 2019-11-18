@@ -1,13 +1,24 @@
-const mockBrowser = require('mock-browser').mocks.MockBrowser;
+var domino = require('domino');
 
-global.window = mockBrowser.createWindow()
-global.document = window.document
-global.navigator = window.navigator
-global.HTMLCollection = window.HTMLCollection
-global.getComputedStyle = window.getComputedStyle
+class HTMLCollection extends Function {}
+const window = domino.createWindow();
+const HTMLCanvasElement = Object.create(window.HTMLCanvasElement);
+HTMLCanvasElement.getContext = () => ({
+  fillRect: () => {},
+  fillStyle: () => {},
+  clearRect: () => {},
+  getImageData: () => {},
+  createImageData: () => {},
+});
+
+global.window = window
+window.HTMLCanvasElement.prototype = HTMLCanvasElement;
+global.document = window.document;
+global.navigator = window.navigator;
+global.HTMLCollection = window.HTMLCollection;
+global.getComputedStyle = window.getComputedStyle;
+global.HTMLCollection = HTMLCollection;
 
 global.console.error = () => {}
 
-module.exports = (worksheet) => {
-    return require('./process-template')(worksheet)
-}
+module.exports = require('./process-template')
