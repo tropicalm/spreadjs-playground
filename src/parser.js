@@ -1,34 +1,35 @@
 const {
+  cloneDeep,
   compose,
   concat,
   contains,
   find,
   flattenDeep,
   isEmpty,
-  min,
   max,
+  mapKeys,
+  min,
+  omit,
   path,
+  pickBy,
   pipe,
   prop,
   reduce,
-  omit,
+  sortBy,
   values,
 } = require('lodash/fp');
-const {
-  ascend,
-  clone,
-  filter,
-  mapObjIndexed,
-  not,
-  sortWith,
-} = require('ramda');
 
-const filterCells = filter(prop('tag'));
+const not = (a) => !a
+const R = require('ramda');
+
+const mapObjIndexed = R.mapObjIndexed
+
+const filterCells = pickBy(prop('tag'));
 const notEmpty = compose(not, isEmpty);
 const getSheetData = path(['data', 'dataTable']);
 const mapSheets = fn => mapObjIndexed(pipe(getSheetData, fn));
-const filterColumns = pipe(mapObjIndexed(filterCells), filter(notEmpty));
-const sortByPos = sortWith([ascend(prop('x')), ascend(prop('y'))]);
+const filterColumns = pipe(mapObjIndexed(filterCells), pickBy(notEmpty));
+const sortByPos = sortBy(['x', 'y']);
 
 const groupCells = mapObjIndexed(sheet =>
   compose(
@@ -53,7 +54,7 @@ const getSpecCells = spec =>
   pipe(
     prop('sheets'),
     mapSheets(filterColumns),
-    filter(notEmpty),
+    pickBy(notEmpty),
     groupCells,
   )(spec);
 
@@ -122,7 +123,7 @@ function parseSpecCell(spec, cells, data) {
           (acc2, cur2, idx2) =>
             acc2.concat(
               cells.map(c => {
-                const cell = clone(c);
+                const cell = cloneDeep(c);
 
                 cell.x += range.x * idx2;
                 cell.y += range.y * idx;
