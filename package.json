@@ -25,7 +25,7 @@
     "immer": "^8.0.1",
     "jsoneditor": "^7.0.4",
     "jsoneditor-react": "^2.0.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "observable-slim": "^0.1.5",
     "ramda": "^0.26.1",
     "react": "^16.9.0",
